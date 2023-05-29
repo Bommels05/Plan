@@ -16,27 +16,24 @@
  */
 package net.playeranalytics.plan.gathering.listeners.events.mixin;
 
-import net.minecraft.commands.CommandSourceStack;
+import com.mojang.authlib.GameProfile;
 import net.minecraft.network.chat.Component;
-import net.minecraft.server.commands.KickCommand;
-import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.players.PlayerList;
 import net.minecraftforge.common.MinecraftForge;
-import net.playeranalytics.plan.gathering.listeners.events.PlayerKickEvent;
+import net.playeranalytics.plan.gathering.listeners.events.PlayerLoginEvent;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
-import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
 
-import java.util.Collection;
-import java.util.Iterator;
+import java.net.SocketAddress;
 
-@Mixin(KickCommand.class)
-public class PlayerKickEventMixin {
+@Mixin(PlayerList.class)
+public class PlayerListMixin {
 
-    @Inject(locals = LocalCapture.CAPTURE_FAILEXCEPTION, method = "kickPlayers", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/network/ServerGamePacketListenerImpl;disconnect(Lnet/minecraft/network/chat/Component;)V"))
-    private static void onKick(CommandSourceStack source, Collection targets, Component reason, CallbackInfoReturnable<Integer> callback, Iterator targetsIterator, ServerPlayer target) {
-        MinecraftForge.EVENT_BUS.post(new PlayerKickEvent(target));
+    @Inject(method = "canPlayerLogin", at = @At(value = "TAIL"))
+    public void onLogin(SocketAddress address, GameProfile profile, CallbackInfoReturnable<Component> callback) {
+        MinecraftForge.EVENT_BUS.post(new PlayerLoginEvent(address, profile, callback.getReturnValue()));
     }
 
 }

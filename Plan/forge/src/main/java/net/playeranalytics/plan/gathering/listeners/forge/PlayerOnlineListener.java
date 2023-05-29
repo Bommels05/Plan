@@ -1,3 +1,19 @@
+/*
+ *  This file is part of Player Analytics (Plan).
+ *
+ *  Plan is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU Lesser General Public License v3 as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  Plan is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
+ *
+ *  You should have received a copy of the GNU Lesser General Public License
+ *  along with Plan. If not, see <https://www.gnu.org/licenses/>.
+ */
 package net.playeranalytics.plan.gathering.listeners.forge;
 
 import com.djrapitops.plan.gathering.cache.JoinAddressCache;
@@ -12,7 +28,8 @@ import com.djrapitops.plan.storage.database.transactions.events.BanStatusTransac
 import com.djrapitops.plan.storage.database.transactions.events.KickStoreTransaction;
 import com.djrapitops.plan.utilities.logging.ErrorContext;
 import com.djrapitops.plan.utilities.logging.ErrorLogger;
-import com.mojang.authlib.GameProfile;
+import net.minecraft.network.ConnectionProtocol;
+import net.minecraft.network.protocol.handshake.ClientIntentionPacket;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.common.MinecraftForge;
@@ -22,7 +39,9 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.playeranalytics.plan.gathering.ForgePlayerPositionTracker;
 import net.playeranalytics.plan.gathering.domain.ForgePlayerData;
 import net.playeranalytics.plan.gathering.listeners.ForgeListener;
+import net.playeranalytics.plan.gathering.listeners.events.HandshakeEvent;
 import net.playeranalytics.plan.gathering.listeners.events.PlayerKickEvent;
+import net.playeranalytics.plan.gathering.listeners.events.PlayerLoginEvent;
 
 import javax.inject.Inject;
 import java.net.SocketAddress;
@@ -68,10 +87,12 @@ public class PlayerOnlineListener implements ForgeListener {
         this.wasRegistered = true;
     }
 
-    /*private void onHandshake(HandshakeC2SPacket packet) {
+    @SubscribeEvent
+    public void onHandshake(HandshakeEvent event) {
         try {
-            if (packet.getIntendedState() == NetworkState.LOGIN) {
-                String address = packet.getAddress();
+            ClientIntentionPacket packet = event.getPacket();
+            if (packet.getIntention() == ConnectionProtocol.LOGIN) {
+                String address = packet.getHostName();
                 if (address != null && address.contains("\u0000")) {
                     address = address.substring(0, address.indexOf('\u0000'));
                 }
@@ -82,17 +103,17 @@ public class PlayerOnlineListener implements ForgeListener {
         }
     }
 
-     */
-    public void onPlayerLogin(SocketAddress address, GameProfile profile, boolean banned) {
+    @SubscribeEvent
+    public void onPlayerLogin(PlayerLoginEvent event) {
         try {
-            UUID playerUUID = profile.getId();
+            UUID playerUUID = event.getProfile().getId();
             ServerUUID serverUUID = serverInfo.getServerUUID();
 
             joinAddressCache.put(playerUUID, joinAddress.get());
 
-            dbSystem.getDatabase().executeTransaction(new BanStatusTransaction(playerUUID, serverUUID, banned));
+            dbSystem.getDatabase().executeTransaction(new BanStatusTransaction(playerUUID, serverUUID, event.isBanned()));
         } catch (Exception e) {
-            errorLogger.error(e, ErrorContext.builder().related(getClass(), address, profile, banned).build());
+            errorLogger.error(e, ErrorContext.builder().related(getClass(), event.getAddress(), event.getProfile(), event.isBanned()).build());
         }
     }
 

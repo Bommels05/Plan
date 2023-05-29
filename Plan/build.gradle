@@ -123,10 +123,23 @@ subprojects {
 
     dependencies {
         // Dependency Injection used across the project
-        shadow "com.google.dagger:dagger:$daggerVersion"
-        annotationProcessor "com.google.dagger:dagger-compiler:$daggerVersion"
-        testImplementation "com.google.dagger:dagger:$daggerVersion"
-        testAnnotationProcessor "com.google.dagger:dagger-compiler:$daggerVersion"
+        shadow("com.google.dagger:dagger:$daggerVersion") {
+            exclude group: 'com.google.guava', module: 'guava'
+        }
+        shadow "com.google.guava:guava:31.0.1-jre"
+        annotationProcessor("com.google.dagger:dagger-compiler:$daggerVersion") {
+            exclude group: 'com.google.guava', module: 'guava'
+        }
+        annotationProcessor "com.google.guava:guava:31.0.1-jre"
+        testImplementation("com.google.dagger:dagger:$daggerVersion") {
+            exclude group: 'com.google.guava', module: 'guava'
+        }
+        testImplementation "com.google.guava:guava:31.0.1-jre"
+        testAnnotationProcessor("com.google.dagger:dagger-compiler:$daggerVersion") {
+            exclude group: 'com.google.guava', module: 'guava'
+        }
+        testAnnotationProcessor "com.google.guava:guava:31.0.1-jre"
+
 
         // Test Tooling Dependencies
         testImplementation "org.junit.jupiter:junit-jupiter:$junitVersion"      // JUnit 5

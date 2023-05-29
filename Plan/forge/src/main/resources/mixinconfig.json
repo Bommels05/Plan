@@ -2,7 +2,9 @@
   "required": true,
   "package": "net.playeranalytics.plan.gathering.listeners.events.mixin",
   "mixins": [
-    "KickEventMixin",
-    ""
+    "PlayerKickEventMixin",
+    "CommandSourceStackMixin",
+    "PlayerListMixin",
+    "ServerHandshakePacketListenerImplMixin"
   ]
 }

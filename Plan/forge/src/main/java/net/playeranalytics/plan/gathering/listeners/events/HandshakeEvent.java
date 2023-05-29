@@ -14,25 +14,19 @@
  *  You should have received a copy of the GNU Lesser General Public License
  *  along with Plan. If not, see <https://www.gnu.org/licenses/>.
  */
-package net.playeranalytics.plugin.scheduling;
+package net.playeranalytics.plan.gathering.listeners.events;
 
-import java.util.concurrent.Future;
+import net.minecraft.network.protocol.handshake.ClientIntentionPacket;
+import net.minecraftforge.eventbus.api.Event;
 
-public class ForgeTask implements Task {
+public class HandshakeEvent extends Event {
+    private final ClientIntentionPacket packet;
 
-    private final Future<?> task;
-
-    public ForgeTask(Future<?> task) {
-        this.task = task;
+    public HandshakeEvent(ClientIntentionPacket packet) {
+        this.packet = packet;
     }
 
-    @Override
-    public boolean isGameThread() {
-        return false;
-    }
-
-    @Override
-    public void cancel() {
-        task.cancel(false);
+    public ClientIntentionPacket getPacket() {
+        return packet;
     }
 }

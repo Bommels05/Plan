@@ -24,6 +24,8 @@ minecraft {
 
     // accessTransformer = file('src/main/resources/META-INF/accesstransformer.cfg')
 
+    //replace "{version}":project.ext.fullVersion
+
     // Default run configurations.
     // These can be tweaked, removed, or duplicated as needed.
     runs {
@@ -120,18 +122,32 @@ repositories {
     // }
 }
 
+configurations {
+    shadow
+    implementation.extendsFrom shadow
+}
+
 dependencies {
-    minecraft 'net.minecraftforge:forge:1.18.2-40.2.2'
+    minecraft('net.minecraftforge:forge:1.18.2-40.2.2')
 
-    annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
+    annotationProcessor ('org.spongepowered:mixin:0.8.5:processor')
 
-    implementation project(":api")
-    implementation project(":common")
+    shadow project(path: ":api")
+    shadow project(path: ":extensions")
+    shadow project(path: ":common")
+    shadow project(path: ":common", configuration: "swaggerJson")
 
-    shadow "net.playeranalytics:platform-abstraction-layer-api:$palVersion"
-    shadow "net.playeranalytics:platform-abstraction-layer-bukkit:$palVersion"
+    implementation ("net.playeranalytics:platform-abstraction-layer-api:$palVersion")
 
-    testImplementation project(path: ":common", configuration: 'testArtifacts')
+    testImplementation (project(path: ":common", configuration: 'testArtifacts'))
+
+    annotationProcessor ('com.google.guava:guava:31.1-jre')
+}
+
+configurations.all {
+    resolutionStrategy {
+        force 'com.google.guava:guava:31.0.1-jre'
+    }
 }
 
 mixin {
@@ -140,13 +156,14 @@ mixin {
 
 // Example for how to get properties into the manifest for reading at runtime.
 jar {
+    archiveClassifier.set('lite')
     manifest {
         attributes([
                 "Specification-Title"     : "plan",
                 //"Specification-Vendor": "plan authors",
                 "Specification-Version"   : "1", // We are version 1 of ourselves
                 "Implementation-Title"    : project.name,
-                "Implementation-Version"  : project.jar.archiveVersion,
+                "Implementation-Version"  : project.ext.fullVersion ,
                 //"Implementation-Vendor": "plan authors",
                 "Implementation-Timestamp": new Date().format("yyyy-MM-dd'T'HH:mm:ssZ")
         ])
@@ -160,7 +177,78 @@ tasks.withType(JavaCompile).configureEach {
 }
 
 shadowJar {
+    archiveClassifier.set('')
     configurations = [project.configurations.shadow]
+
+    from findProject(':extensions:adventure').tasks.shadowJar.archiveFile
+
+    exclude('/mappings/')
+
+    // Exclude these files
+    exclude "**/*.svg"
+    exclude "**/*.psd"
+    exclude "**/*.map"
+    exclude "LICENSE*.txt"
+    exclude "jetty-dir.css"
+
+    exclude "**/module-info.class"
+    exclude "module-info.class"
+    exclude 'META-INF/versions/' // Causes Sponge to crash
+    exclude 'mozilla/**/*'
+
+    // Exclude extra dependencies
+    exclude 'org/apache/http/**/*' // Unnecessary http client depended on by geolite2 implementation
+    exclude "org/junit/**/*" // see extensions/build.gradle
+    exclude "org/opentest4j/**/*" // see extensions/build.gradle
+    exclude "org/checkerframework/**/*" // Dagger compiler
+    exclude "com/google/common/**/*"
+    exclude "com/google/thirdparty/**/*"
+    // Exclude swagger
+    exclude "org/yaml/**/*"
+    exclude "nonapi/**/*"
+    exclude "io/github/classgraph/**/*"
+    exclude "io/swagger/**/*"
+    exclude "com/sun/activation/**/*"
+    exclude "jakarta/activation/**/*"
+    exclude "jakarta/validation/**/*"
+    exclude "jakarta/ws/**/*"
+    exclude "jakarta/xml/**/*"
+    exclude "javassist/**/*"
+
+    relocate('org.apache', 'plan.org.apache') {
+        exclude 'org/apache/logging/**'
+    }
+    relocate 'dagger', 'plan.dagger'
+    // Don't relocate MySQL or SQLite since they are loaded with a isolated class loader
+    // relocate 'org.sqlite', 'plan.org.sqlite'
+    // relocate 'com.mysql', 'plan.com.mysql'
+    // relocate 'com.google.protobuf', 'plan.com.mysql.cj.x.google.protobuf'
+    relocate 'javax.inject', 'plan.javax.inject'
+    relocate 'com.github.benmanes', 'plan.com.github.benmanes'
+    relocate 'dev.vankka.dependencydownload', 'plan.dev.vankka.dependencydownload'
+
+    relocate 'com.maxmind', 'plan.com.maxmind'
+    relocate 'com.fasterxml', 'plan.com.fasterxml'
+    relocate 'com.zaxxer', 'plan.com.zaxxer'
+    relocate 'com.google.gson', 'plan.com.google.gson'
+    relocate 'com.google.errorprone', 'plan.com.google.errorprone'
+    relocate 'org.bstats', 'plan.org.bstats'
+
+    relocate 'org.eclipse.jetty', 'plan.org.eclipse.jetty'
+    relocate 'jakarta.servlet', 'plan.jakarta.servlet'
+    relocate 'javax.servlet', 'plan.javax.servlet'
+
+    relocate 'org.slf4j', 'plan.org.slf4j'
+
+    relocate 'org.json.simple', 'plan.org.json.simple'
+
+    mergeServiceFiles()
+
+    finalizedBy 'reobfShadowJar'
 }
 
-shadowJar.finalizedBy('jar')
+assemble.dependsOn shadowJar
+
+reobf {
+    shadowJar {} // Reobfuscate the shadowed JAR
+}

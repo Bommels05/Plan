@@ -1,3 +1,19 @@
+/*
+ *  This file is part of Player Analytics (Plan).
+ *
+ *  Plan is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU Lesser General Public License v3 as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  Plan is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
+ *
+ *  You should have received a copy of the GNU Lesser General Public License
+ *  along with Plan. If not, see <https://www.gnu.org/licenses/>.
+ */
 package net.playeranalytics.plan.gathering.timed;
 
 import com.djrapitops.plan.TaskSystem;
@@ -45,7 +61,6 @@ public class ForgePingCounter extends TaskSystem.Task implements ForgeListener {
         this.server = server;
         startRecording = new ConcurrentHashMap<>();
         playerHistory = new HashMap<>();
-        MinecraftForge.EVENT_BUS.register(this);
     }
 
     @Override
@@ -92,6 +107,7 @@ public class ForgePingCounter extends TaskSystem.Task implements ForgeListener {
             long period = 40L;
             runnableFactory.create(this).runTaskTimer(delay, period);
         }
+        MinecraftForge.EVENT_BUS.register(this);
         this.enable();
     }
 
@@ -109,7 +125,7 @@ public class ForgePingCounter extends TaskSystem.Task implements ForgeListener {
     }
 
     @SubscribeEvent
-    public void onPlayerJoin(PlayerEvent.PlayerLoggedInEvent event) {;
+    public void onPlayerJoin(PlayerEvent.PlayerLoggedInEvent event) {
         if (!this.isEnabled) {
             return;
         }

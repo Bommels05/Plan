@@ -16,18 +16,36 @@
  */
 package net.playeranalytics.plan.gathering.listeners.events;
 
+import com.mojang.authlib.GameProfile;
+import net.minecraft.network.chat.Component;
 import net.minecraftforge.eventbus.api.Event;
-import net.playeranalytics.plan.PlanForge;
 
-public class PlanEnableEvent extends Event {
+import java.net.SocketAddress;
 
-    private final PlanForge plan;
+public class PlayerLoginEvent extends Event {
+    private final SocketAddress address;
+    private final GameProfile profile;
+    private final Component banReason;
 
-    public PlanEnableEvent(PlanForge plan) {
-        this.plan = plan;
+    public PlayerLoginEvent(SocketAddress address, GameProfile profile, Component banReason) {
+        this.address = address;
+        this.profile = profile;
+        this.banReason = banReason;
     }
 
-    public PlanForge getPlan() {
-        return plan;
+    public SocketAddress getAddress() {
+        return address;
+    }
+
+    public GameProfile getProfile() {
+        return profile;
+    }
+
+    public Component getBanReason() {
+        return banReason;
+    }
+
+    public boolean isBanned() {
+        return banReason != null;
     }
 }

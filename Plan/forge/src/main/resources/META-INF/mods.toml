@@ -1,12 +1,12 @@
 modLoader = "javafml"
 loaderVersion = "[40,)"
-license = ""
+license = "GNU Lesser General Public License v3"
 # A URL to refer people to when problems occur with this mod
 #issueTrackerURL="https://change.me.to.your.issue.tracker.example.invalid/" #optional
 # A list of mods - how many allowed here is determined by the individual mod loader
 [[mods]] #mandatory
 modId = "plan"
-version = "${version}"
+version = "${file.jarVersion}"
 displayName = "Plan"
 # A URL to query for updates for this mod. See the JSON update specification https://docs.minecraftforge.net/en/latest/misc/updatechecker/
 #updateJSONURL="https://change.me.example.invalid/updates.json" #optional
